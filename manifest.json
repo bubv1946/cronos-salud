@@ -1,0 +1,25 @@
+{
+  "name": "Pastillero Digital",
+  "short_name": "Pastillero",
+  "description": "Tranquilidad para vos. Independencia para ellos.",
+  "start_url": "/cronos-salud/app_4.html",
+  "display": "standalone",
+  "background_color": "#F1EFE8",
+  "theme_color": "#1D9E75",
+  "orientation": "portrait",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
