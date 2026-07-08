@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pastileiro Digital</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --verde: #1D9E75;
+    --verde-dark: #0F6E56;
+    --verde-light: #E1F5EE;
+    --rojo: #D85A30;
+    --rojo-dark: #993C1D;
+    --rojo-light: #FAECE7;
+    --gris: #888780;
+    --gris-light: #F1EFE8;
+    --texto: #2C2C2A;
+    --texto-suave: #5F5E5A;
+    --blanco: #ffffff;
+    --borde: rgba(0,0,0,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--gris-light);
+    min-height: 100vh;
+    color: var(--texto);
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    background: var(--verde);
+    color: white;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  .header-logo span { font-size: 1.4rem; }
+  .header-user {
+    font-size: 0.8rem;
+    opacity: 0.85;
+    text-align: right;
+  }
+
+  /* ===== PANTALLAS ===== */
+  .screen { display: none; padding: 1.5rem 1rem; max-width: 480px; margin: 0 auto; }
+  .screen.active { display: block; }
+
+  /* ===== CARD ===== */
+  .card {
+    background: var(--blanco);
+    border-radius: 16px;
+    border: 1px solid var(--borde);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .card-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gris);
+    margin-bottom: 0.75rem;
+  }
+
+  /* ===== BOTONES DE DOSIS ===== */
+  .dose-btn {
+    width: 100%;
+    background: var(--verde);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 1.25rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    transition: transform 0.1s, opacity 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+    overflow: hidden;
+  }
+  .dose-btn:active { transform: scale(0.97); }
+  .dose-btn.taken {
+    background: var(--gris-light);
+    color: var(--gris);
+    cursor: default;
+  }
+  .dose-btn.missed {
+    background: var(--rojo-light);
+    color: var(--rojo-dark);
+  }
+  .dose-btn .icon { font-size: 1.6rem; flex-shrink: 0; }
+  .dose-btn .info { text-align: left; }
+  .dose-btn .info .name { font-size: 1rem; font-weight: 600; }
+  .dose-btn .info .time { font-size: 0.8rem; opacity: 0.8; margin-top: 2px; }
+  .dose-btn .status-chip {
+    margin-left: auto;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.25);
+    flex-shrink: 0;
+  }
+  .dose-btn.taken .status-chip {
+    background: rgba(29,158,117,0.15);
+    color: var(--verde-dark);
+  }
+
+  /* Progress ring en el botón */
+  .dose-progress {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: rgba(255,255,255,0.3);
+  }
+  .dose-progress-bar {
+    height: 100%;
+    background: rgba(255,255,255,0.7);
+    transition: width 0.1s linear;
+  }
+
+  /* ===== BOTÓN DE EMERGÊNCIA ===== */
+  .emergency-section {
+    margin-top: 1.5rem;
+  }
+  .emergency-btn {
+    width: 100%;
+    background: var(--rojo);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 1.25rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s;
+  }
+  .emergency-btn.holding { background: var(--rojo-dark); }
+  .emergency-label-hold { font-size: 0.75rem; opacity: 0.85; display: block; margin-top: 2px; }
+  .emergency-progress {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 4px;
+    background: rgba(0,0,0,0.2);
+  }
+  .emergency-progress-bar {
+    height: 100%;
+    background: rgba(255,255,255,0.8);
+    width: 0%;
+    transition: width 0.05s linear;
+  }
+  .emergency-hint {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--texto-suave);
+    margin-top: 0.4rem;
+  }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--texto);
+    color: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+    max-width: 90vw;
+    text-align: center;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { background: var(--verde-dark); }
+  .toast.error { background: var(--rojo-dark); }
+  .toast.warning { background: #BA7517; }
+
+  /* ===== MODAL BLOCKER (no pagó) ===== */
+  .paywall {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    padding: 1rem;
+  }
+  .paywall.hidden { display: none; }
+  .paywall-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem 1.5rem;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+  }
+  .paywall-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+  .paywall-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .paywall-text { color: var(--texto-suave); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.25rem; }
+  .btn-pay {
+    display: block;
+    width: 100%;
+    background: #009EE3;
+    color: white;
+    text-decoration: none;
+    border-radius: 12px;
+    padding: 0.9rem;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-pay-int {
+    display: block;
+    width: 100%;
+    background: #003087;
+    color: white;
+    text-decoration: none;
+    border-radius: 12px;
+    padding: 0.9rem;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-ya-pague {
+    font-size: 0.8rem;
+    color: var(--verde);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  /* ===== FORMULARIO DE ONBOARDING ===== */
+  .onboarding { padding: 1.5rem 1rem; max-width: 480px; margin: 0 auto; }
+  .ob-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+  .ob-subtitle { color: var(--texto-suave); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.4; }
+  .form-group { margin-bottom: 1rem; }
+  .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--texto-suave); margin-bottom: 0.3rem; }
+  .form-group input {
+    width: 100%;
+    border: 1.5px solid var(--borde);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    background: white;
+    color: var(--texto);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus { border-color: var(--verde); }
+  .btn-primary {
+    width: 100%;
+    background: var(--verde);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 1rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 0.5rem;
+  }
+  .btn-secondary {
+    width: 100%;
+    background: none;
+    color: var(--texto-suave);
+    border: 1.5px solid var(--borde);
+    border-radius: 12px;
+    padding: 0.9rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: 0.5rem;
+  }
+
+  /* ===== HORARIOS ===== */
+  .schedule-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--borde);
+  }
+  .schedule-item:last-child { border-bottom: none; }
+  .schedule-name { font-weight: 600; font-size: 0.95rem; }
+  .schedule-time { font-size: 0.8rem; color: var(--texto-suave); margin-top: 2px; }
+  .btn-add-dose {
+    width: 100%;
+    background: none;
+    border: 1.5px dashed var(--borde);
+    border-radius: 10px;
+    padding: 0.75rem;
+    color: var(--verde);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.5rem;
+  }
+
+  /* ===== RESUMEN DEL DÍA ===== */
+  .day-summary {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .summary-chip {
+    flex: 1;
+    background: white;
+    border-radius: 12px;
+    padding: 0.75rem;
+    text-align: center;
+    border: 1px solid var(--borde);
+  }
+  .summary-chip .num { font-size: 1.5rem; font-weight: 700; }
+  .summary-chip .lbl { font-size: 0.7rem; color: var(--texto-suave); margin-top: 2px; }
+  .summary-chip.green .num { color: var(--verde); }
+  .summary-chip.red .num { color: var(--rojo); }
+  .summary-chip.gray .num { color: var(--gris); }
+
+  /* ===== LOGIN ===== */
+  .login-wrap {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    background: var(--gris-light);
+  }
+  .login-logo { font-size: 3rem; margin-bottom: 0.5rem; }
+  .login-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+  .login-subtitle { color: var(--texto-suave); font-size: 0.9rem; margin-bottom: 2rem; text-align: center; }
+  .login-card {
+    background: white;
+    border-radius: 20px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 380px;
+    border: 1px solid var(--borde);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== PAYWALL ===== -->
+<div class="paywall hidden" id="paywall">
+  <div class="paywall-card">
+    <div class="paywall-icon">💊</div>
+    <div class="paywall-title">Pastileiro Digital</div>
+    <div class="paywall-text">Assine para ativar os avisos automáticos de medicação e o botão de emergência.<br><br>Menos que 2 cafés por mês.</div>
+    <a href="https://mpago.la/1AzDRkM" class="btn-pay" id="btn-mp">
+      🇧🇷 Assinar com Mercado Pago
+    </a>
+    <a href="#stripe" class="btn-pay-int" id="btn-stripe">
+      🌍 Assinar com PayPal / Stripe (USD)
+    </a>
+    <button class="btn-ya-pague" onclick="verificarPago()">Já paguei → ativar minha conta</button>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast"></div>
+
+<!-- ===== PANTALLA: LOGIN ===== -->
+<div id="screen-login" class="login-wrap active" style="display:flex">
+  <div class="login-logo">💊</div>
+  <div class="login-title">Pastileiro Digital</div>
+  <div class="login-subtitle">Tranquilidade para você. Independência para eles.</div>
+  <div class="login-card">
+    <div class="form-group">
+      <label>Seu e-mail</label>
+      <input type="email" id="login-email" placeholder="nome@email.com" />
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="login-pass" placeholder="••••••••" />
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Entrar</button>
+    <button class="btn-secondary" onclick="showRegister()">Criar conta nova</button>
+  </div>
+</div>
+
+<!-- ===== PANTALLA: REGISTRO ===== -->
+<div id="screen-register" style="display:none">
+  <div class="onboarding">
+    <div class="ob-title">Criar conta</div>
+    <div class="ob-subtitle">Preencha os dados para começar. O responsável receberá os avisos pelo WhatsApp.</div>
+    <div class="form-group">
+      <label>Seu nome (quem toma a medicação)</label>
+      <input type="text" id="reg-patient" placeholder="Ex: João Silva" />
+    </div>
+    <div class="form-group">
+      <label>Seu e-mail</label>
+      <input type="email" id="reg-email" placeholder="nome@email.com" />
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="reg-pass" placeholder="Mínimo 6 caracteres" />
+    </div>
+    <div class="form-group">
+      <label>Nome do responsável (quem recebe os avisos)</label>
+      <input type="text" id="reg-auditor-name" placeholder="Ex: Mãe" />
+    </div>
+    <div class="form-group">
+      <label>WhatsApp do responsável (com código do país)</label>
+      <input type="text" id="reg-auditor-phone" inputmode="text" placeholder="Ex: +5511912345678" />
+    </div>
+    <button class="btn-primary" onclick="doRegister()">Criar minha conta</button>
+    <button class="btn-secondary" onclick="showLogin()">Já tenho uma conta</button>
+  </div>
+</div>
+
+<!-- ===== PANTALLA PRINCIPAL: APP ===== -->
+<div id="screen-app" style="display:none">
+  <div class="header">
+    <div class="header-logo">
+      <span>💊</span> Pastileiro Digital
+    </div>
+    <div class="header-user">
+      <span id="user-name-header">Carregando...</span><br>
+      <span id="auditor-name-header" style="opacity:0.7"></span>
+    </div>
+  </div>
+
+  <div class="screen active" style="display:block">
+
+    <!-- Resumen del día -->
+    <div class="day-summary" id="day-summary">
+      <div class="summary-chip green"><div class="num" id="count-taken">0</div><div class="lbl">Tomados</div></div>
+      <div class="summary-chip red"><div class="num" id="count-missed">0</div><div class="lbl">Omitidos</div></div>
+      <div class="summary-chip gray"><div class="num" id="count-pending">0</div><div class="lbl">Pendentes</div></div>
+    </div>
+
+    <!-- Botones de dosis -->
+    <div class="card">
+      <div class="card-title">Doses de hoje</div>
+      <div id="dose-buttons">
+        <!-- Se generan dinámicamente -->
+        <div style="text-align:center;padding:2rem;color:var(--gris)">Carregando doses...</div>
+      </div>
+      <button class="btn-add-dose" onclick="showAddDose()">+ Adicionar dose</button>
+    </div>
+
+    <!-- Emergencia -->
+    <div class="emergency-section">
+      <button class="emergency-btn" id="emergency-btn"
+        onmousedown="startEmergency(event)" ontouchstart="startEmergency(event)"
+        onmouseup="cancelEmergency()" ontouchend="cancelEmergency()"
+        onmouseleave="cancelEmergency()">
+        <span style="font-size:1.5rem">🚨</span>
+        <div>
+          <div>EMERGÊNCIA</div>
+          <span class="emergency-label-hold">Mantenha pressionado 2 segundos</span>
+        </div>
+        <div class="emergency-progress">
+          <div class="emergency-progress-bar" id="em-progress-bar"></div>
+        </div>
+      </button>
+      <div class="emergency-hint">Mantenha pressionado 2 segundos para evitar acionamentos acidentais</div>
+    </div>
+
+    <!-- Notas -->
+    <div class="card" style="margin-top:1rem">
+      <div class="card-title">📝 Minhas notas</div>
+      <div style="font-size:0.75rem;color:var(--texto-suave);margin-bottom:0.5rem">
+        Datas de renovação, consultas, informações importantes...
+      </div>
+      <textarea id="notes-text" 
+        style="width:100%;min-height:120px;border:1.5px solid var(--borde);border-radius:10px;padding:0.75rem;font-size:0.9rem;font-family:inherit;resize:vertical;outline:none;color:var(--texto)"
+        placeholder="Ej: Renovación Avodart — 15 de agosto&#10;Turno cardiólogo — 3 de septiembre&#10;..."
+        oninput="saveNotes()"></textarea>
+      <button onclick="clearNotes()" 
+        style="width:100%;background:none;border:1.5px solid var(--borde);border-radius:10px;padding:0.5rem;color:var(--gris);font-size:0.8rem;cursor:pointer;margin-top:0.5rem">
+        🗑️ Apagar notas
+      </button>
+    </div>
+
+    <!-- Historial -->
+    <div class="card" style="margin-top:1rem">
+      <div class="card-title">Histórico de doses</div>
+      <div id="history-list" style="font-size:0.85rem;color:var(--texto-suave)">Carregando...</div>
+    </div>
+
+    <!-- Configuración -->
+    <div class="card" style="margin-top:1rem">
+      <div class="card-title">Minha conta</div>
+      <div style="font-size:0.85rem;color:var(--texto-suave);margin-bottom:0.75rem" id="config-auditor-info">
+        Responsável: cargando...
+      </div>
+      <button class="btn-secondary" onclick="showEditAuditor()" style="margin-bottom:0.5rem">✏️ Editar responsável / contato de emergência</button>
+      <button class="btn-secondary" onclick="doLogout()">Sair da conta</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== MODAL EDITAR AUDITOR ===== -->
+<div id="modal-edit-auditor" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center;">
+  <div style="background:white;border-radius:20px 20px 0 0;padding:1.5rem;width:100%;max-width:480px;max-height:90vh;overflow-y:auto">
+    <div style="font-weight:700;font-size:1.1rem;margin-bottom:0.25rem">Responsável / Contato de emergência</div>
+    <div style="font-size:0.8rem;color:#888;margin-bottom:1rem">O responsável recebe os avisos de dose e as alertas de emergência.</div>
+    <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888;margin-bottom:0.5rem">Contato principal</div>
+    <div class="form-group">
+      <label>Nome</label>
+      <input type="text" id="edit-auditor-name" placeholder="Ex: Meu filho João" />
+    </div>
+    <div class="form-group">
+      <label>WhatsApp (com código do país)</label>
+      <input type="text" id="edit-auditor-phone" inputmode="text" placeholder="Ex: +5511912345678" />
+    </div>
+    <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888;margin:1rem 0 0.5rem">Contato secundário (opcional)</div>
+    <div style="font-size:0.8rem;color:#888;margin-bottom:0.75rem">Se o principal não puder atender, o aviso chegará a este também.</div>
+    <div class="form-group">
+      <label>Nome</label>
+      <input type="text" id="edit-auditor2-name" placeholder="Ex: Minha filha Maria" />
+    </div>
+    <div class="form-group">
+      <label>WhatsApp (com código do país)</label>
+      <input type="text" id="edit-auditor2-phone" inputmode="text" placeholder="Ex: +5511987654321" />
+    </div>
+    <button class="btn-primary" onclick="saveAuditor()">Salvar alterações</button>
+    <button class="btn-secondary" onclick="closeEditAuditor()">Cancelar</button>
+  </div>
+</div>
+
+<!-- ===== MODAL AGREGAR DOSIS ===== -->
+<div id="modal-add-dose" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center;">
+  <div style="background:white;border-radius:20px 20px 0 0;padding:1.5rem;width:100%;max-width:480px">
+    <div style="font-weight:700;font-size:1.1rem;margin-bottom:1rem">Nova dose</div>
+    <div class="form-group">
+      <label>Nome da dose</label>
+      <input type="text" id="dose-name-input" placeholder="Ex: Comprimido da manhã" />
+    </div>
+    <div class="form-group">
+      <label>Horário programado</label>
+      <input type="time" id="dose-time-input" value="08:00" />
+    </div>
+    <div class="form-group">
+      <label>Minutos de tolerância antes do aviso de dose não tomada</label>
+      <input type="number" id="dose-grace-input" value="30" min="5" max="120" />
+    </div>
+    <button class="btn-primary" onclick="saveDose()">Salvar dose</button>
+    <button class="btn-secondary" onclick="closeAddDose()">Cancelar</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURACIÓN — REEMPLAZÁ CON TUS DATOS
+// ============================================================
+const SUPABASE_URL = "https://synpowctdnxdluzwpjuw.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_CIyoWJHsdLLAw_zu2NAThQ_I8cqZvsI";
+const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/dynamic-handler`;
+
+// Links de pago
+const MP_LINK = "https://mpago.la/1AzDRkM";
+const STRIPE_LINK = "#stripe";
+// Correos con bypass del pago (dueño + familiares)
+const BYPASS_EMAILS = [
+  "arqwallner@gmail.com",
+  "totowallner2007@gmail.com",
+  "bubyjubilado@gmail.com",
+  "cronossalud@gmail.com",
+];
+const BYPASS_EMAIL = BYPASS_EMAILS[0]; // compatibilidad
+
+// Tiempo de hold para emergencia (ms)
+const EMERGENCY_HOLD_MS = 2000;
+
+// ============================================================
+// INICIALIZACIÓN
+// ============================================================
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let currentProfile = null;
+let emergencyInterval = null;
+let emergencyStart = null;
+let doseTimers = {};
+
+document.getElementById("btn-mp").href = MP_LINK;
+document.getElementById("btn-stripe").href = STRIPE_LINK;
+
+// Al cargar, verificar sesión
+window.addEventListener("DOMContentLoaded", async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    await loadUserData();
+  } else {
+    showScreen("login");
+  }
+});
+
+// ============================================================
+// NAVEGACIÓN
+// ============================================================
+function showScreen(name) {
+  document.getElementById("screen-login").style.display = "none";
+  document.getElementById("screen-register").style.display = "none";
+  document.getElementById("screen-app").style.display = "none";
+  if (name === "login") document.getElementById("screen-login").style.display = "flex";
+  if (name === "register") document.getElementById("screen-register").style.display = "block";
+  if (name === "app") document.getElementById("screen-app").style.display = "block";
+}
+function showLogin() { showScreen("login"); }
+function showRegister() { showScreen("register"); }
+
+// ============================================================
+// AUTH
+// ============================================================
+async function doLogin() {
+  const email = document.getElementById("login-email").value.trim();
+  const pass = document.getElementById("login-pass").value;
+  if (!email || !pass) return showToast("Preencha todos os campos", "error");
+
+  showToast("Entrando...", "");
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) return showToast("Dados incorretos", "error");
+  currentUser = data.user;
+  await loadUserData();
+}
+
+async function doRegister() {
+  const patientName = document.getElementById("reg-patient").value.trim();
+  const email = document.getElementById("reg-email").value.trim();
+  const pass = document.getElementById("reg-pass").value;
+  const auditorName = document.getElementById("reg-auditor-name").value.trim();
+  const auditorPhone = document.getElementById("reg-auditor-phone").value.trim();
+
+  if (!patientName || !email || !pass || !auditorName || !auditorPhone) {
+    return showToast("Preencha todos os campos", "error");
+  }
+  if (pass.length < 6) return showToast("A senha precisa ter no mínimo 6 caracteres", "error");
+
+  showToast("Criando conta...", "");
+
+  const { data, error } = await sb.auth.signUp({ email, password: pass });
+  if (error) return showToast(error.message, "error");
+
+  // Guardar perfil
+  const { error: profError } = await sb.from("pastillero_users").insert({
+    id: data.user.id,
+    email,
+    patient_name: patientName,
+    auditor_name: auditorName,
+    auditor_phone: auditorPhone,
+  });
+
+  if (profError) return showToast("Erro ao salvar perfil", "error");
+
+  currentUser = data.user;
+  await loadUserData();
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  currentUser = null;
+  currentProfile = null;
+  clearDoseTimers();
+  showScreen("login");
+}
+
+// ============================================================
+// CARGAR DATOS DEL USUARIO
+// ============================================================
+async function loadUserData() {
+  const { data: profile, error } = await sb.from("pastillero_users")
+    .select("*").eq("id", currentUser.id).single();
+
+  if (error || !profile) return showToast("Erro ao carregar perfil", "error");
+  currentProfile = profile;
+
+  // Verificar suscripción (excepto bypass)
+  if (!BYPASS_EMAILS.includes(currentUser.email)) {
+    const { data: sub } = await sb.from("pastillero_subs")
+      .select("*").eq("user_id", currentUser.id).eq("active", true).single();
+    if (!sub) {
+      showPaywall();
+      showScreen("app");
+      renderAppHeader();
+      return;
+    }
+  }
+
+  showScreen("app");
+  document.getElementById("paywall").classList.add("hidden");
+  renderAppHeader();
+  await loadDoses();
+  await loadHistory();
+  await loadNotes();
+}
+
+function renderAppHeader() {
+  if (!currentProfile) return;
+  document.getElementById("user-name-header").textContent = currentProfile.patient_name;
+  document.getElementById("auditor-name-header").textContent = `Responsável: ${currentProfile.auditor_name}`;
+  let info = `📱 ${currentProfile.auditor_name}: ${currentProfile.auditor_phone}`;
+  if (currentProfile.auditor2_name && currentProfile.auditor2_phone) {
+    info += `\n📱 ${currentProfile.auditor2_name}: ${currentProfile.auditor2_phone}`;
+  }
+  document.getElementById("config-auditor-info").textContent = info;
+}
+
+// ============================================================
+// DOSIS
+// ============================================================
+async function loadDoses() {
+  const { data: doses, error } = await sb.from("pastillero_schedules")
+    .select("*").eq("user_id", currentUser.id).order("scheduled_time");
+
+  const container = document.getElementById("dose-buttons");
+
+  if (error || !doses || doses.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:1.5rem;color:var(--gris)">
+      No tenés dosis configuradas.<br>Tocá "+ Adicionar dose" para empezar.
+    </div>`;
+    updateSummary([], [], []);
+    return;
+  }
+
+  // Cargar registros de hoy
+  const hoy = new Date().toISOString().split("T")[0];
+  const { data: logs } = await sb.from("pastillero_logs")
+    .select("*")
+    .eq("user_id", currentUser.id)
+    .eq("action", "dose_taken")
+    .gte("timestamp", hoy + "T00:00:00Z");
+
+  const takenIds = new Set((logs || []).map(l => l.schedule_id));
+
+  const ahora = new Date();
+  const taken = [], missed = [], pending = [];
+  let html = "";
+
+  doses.forEach(dose => {
+    const isTaken = takenIds.has(dose.id);
+    const [h, m] = dose.scheduled_time.split(":").map(Number);
+    const doseTime = new Date(ahora);
+    doseTime.setHours(h, m, 0, 0);
+    const graceMs = (dose.grace_minutes || 30) * 60 * 1000;
+    const overdue = !isTaken && (ahora - doseTime) > graceMs;
+
+    if (isTaken) taken.push(dose);
+    else if (overdue) missed.push(dose);
+    else pending.push(dose);
+
+    let statusClass = isTaken ? "taken" : (overdue ? "missed" : "");
+    let statusChip = isTaken ? "✅ Tomado" : (overdue ? "⚠️ Atrasado" : "⏳ Pendente");
+    let icon = isTaken ? "✅" : (overdue ? "⚠️" : "💊");
+
+    if (isTaken) {
+      // Dosis ya tomada — solo muestra el estado
+      html += `
+        <div class="dose-btn taken" data-id="${dose.id}" style="flex-direction:column;align-items:stretch;gap:0.5rem">
+          <div style="display:flex;align-items:center;gap:0.75rem">
+            <span class="icon">✅</span>
+            <div class="info" style="flex:1">
+              <div class="name">${dose.dose_name}</div>
+              <div class="time">${dose.scheduled_time} hs</div>
+            </div>
+            <div class="status-chip">✅ Tomado</div>
+          </div>
+          <button onclick="deleteDose('${dose.id}')" 
+            style="width:100%;background:rgba(0,0,0,0.06);border:none;border-radius:8px;padding:0.4rem;font-size:0.8rem;cursor:pointer;color:#888">
+            🗑️ Excluir esta dose
+          </button>
+        </div>`;
+    } else {
+      // Dosis pendiente o tarde — muestra botones de acción
+      html += `
+        <div class="dose-btn ${statusClass}" data-id="${dose.id}" style="flex-direction:column;align-items:stretch;gap:0.6rem">
+          <div style="display:flex;align-items:center;gap:0.75rem">
+            <span class="icon">${icon}</span>
+            <div class="info" style="flex:1">
+              <div class="name">${dose.dose_name}</div>
+              <div class="time">${dose.scheduled_time} hs${overdue ? " · Você ainda pode registrar" : ""}</div>
+            </div>
+            <div class="status-chip">${statusChip}</div>
+            <button onclick="event.stopPropagation(); deleteDose('${dose.id}')" style="background:rgba(0,0,0,0.1);border:none;border-radius:8px;padding:4px 8px;font-size:0.75rem;cursor:pointer;color:inherit;flex-shrink:0">🗑️</button>
+          </div>
+          <div style="display:flex;gap:0.5rem">
+            <button onclick="confirmDose('${dose.id}', true, this.closest('.dose-btn'))" 
+              style="flex:1;background:var(--verde);color:white;border:none;border-radius:10px;padding:0.6rem;font-size:0.85rem;font-weight:700;cursor:pointer">
+              ✅ Tomei + Avisar
+            </button>
+            <button onclick="confirmDose('${dose.id}', false, this.closest('.dose-btn'))" 
+              style="flex:1;background:rgba(0,0,0,0.08);color:var(--texto-suave);border:none;border-radius:10px;padding:0.6rem;font-size:0.85rem;font-weight:600;cursor:pointer">
+              🔕 Tomei sem avisar
+            </button>
+          </div>
+        </div>`;
+    }
+
+    // Programar avisos si está pendiente
+    if (!isTaken && !overdue) {
+      scheduleOverdueAlert(dose, doseTime, graceMs);
+      scheduleVoiceAlert(dose, doseTime);
+    }
+  });
+
+  container.innerHTML = html;
+  updateSummary(taken, missed, pending);
+}
+
+function updateSummary(taken, missed, pending) {
+  document.getElementById("count-taken").textContent = taken.length;
+  document.getElementById("count-missed").textContent = missed.length;
+  document.getElementById("count-pending").textContent = pending.length;
+}
+
+async function confirmDose(doseId, notifyAuditor, container) {
+  if (container) {
+    container.style.opacity = "0.6";
+    container.style.pointerEvents = "none";
+  }
+  showToast("Registrando...", "");
+
+  // PASO 1: Guardar en la base de datos (siempre)
+  const { error: logError } = await sb.from("pastillero_logs").insert({
+    user_id: currentUser.id,
+    schedule_id: doseId,
+    action: "dose_taken",
+    notify_sent: notifyAuditor,
+    timestamp: new Date().toISOString(),
+    success: true,
+  });
+
+  if (logError) {
+    showToast("Erro ao salvar a dose", "error");
+    if (container) { container.style.opacity = "1"; container.style.pointerEvents = "auto"; }
+    return;
+  }
+
+  // PASO 2: Enviar WhatsApp solo si el usuario eligió avisar
+  if (notifyAuditor) {
+    try {
+      const res = await fetch(EDGE_FUNCTION_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_ANON_KEY}` },
+        body: JSON.stringify({ action: "dose_taken", userId: currentUser.id }),
+      });
+      if (res.ok) {
+        showToast(`✅ Toma registrada · ${currentProfile.auditor_name} foi avisado/a`, "success");
+      } else {
+        showToast("✅ Dose registrada (WhatsApp em breve)", "success");
+      }
+    } catch (e) {
+      showToast("✅ Dose registrada (sem aviso por enquanto)", "success");
+    }
+  } else {
+    showToast("✅ Dose registrada sem avisar o responsável", "success");
+  }
+
+  await loadDoses();
+  await loadHistory();
+}
+
+function scheduleOverdueAlert(dose, doseTime, graceMs) {
+  const now = new Date();
+  const alertAt = new Date(doseTime.getTime() + graceMs);
+  const msUntilAlert = alertAt - now;
+
+  if (msUntilAlert > 0 && msUntilAlert < 24 * 60 * 60 * 1000) {
+    if (doseTimers[dose.id]) clearTimeout(doseTimers[dose.id]);
+    doseTimers[dose.id] = setTimeout(async () => {
+      // Verificar si ya tomó antes de disparar
+      const hoy = new Date().toISOString().split("T")[0];
+      const { data: log } = await sb.from("pastillero_logs")
+        .select("id").eq("user_id", currentUser.id)
+        .eq("schedule_id", dose.id).eq("action", "dose_taken")
+        .gte("timestamp", hoy + "T00:00:00Z").single();
+
+      if (!log) {
+        // No tomó → aviso al auditor
+        await fetch(EDGE_FUNCTION_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_ANON_KEY}` },
+          body: JSON.stringify({ action: "missed_dose", userId: currentUser.id }),
+        });
+        showToast(`⚠️ Se avisó a ${currentProfile.auditor_name} por dose não tomada`, "warning");
+        await loadDoses();
+      }
+    }, msUntilAlert);
+  }
+}
+
+function clearDoseTimers() {
+  Object.values(doseTimers).forEach(clearTimeout);
+  doseTimers = {};
+}
+
+// ============================================================
+// AGREGAR DOSIS
+// ============================================================
+function showAddDose() {
+  const modal = document.getElementById("modal-add-dose");
+  modal.style.display = "flex";
+}
+function closeAddDose() {
+  document.getElementById("modal-add-dose").style.display = "none";
+}
+async function saveDose() {
+  const name = document.getElementById("dose-name-input").value.trim();
+  const time = document.getElementById("dose-time-input").value;
+  const grace = parseInt(document.getElementById("dose-grace-input").value) || 30;
+  if (!name || !time) return showToast("Preencha todos os campos", "error");
+
+  const { error } = await sb.from("pastillero_schedules").insert({
+    user_id: currentUser.id,
+    dose_name: name,
+    scheduled_time: time,
+    grace_minutes: grace,
+  });
+
+  if (error) return showToast("Erro ao salvar", "error");
+  closeAddDose();
+  showToast("Dose salva ✅", "success");
+  await loadDoses();
+}
+
+// ============================================================
+// BORRAR DOSIS
+// ============================================================
+async function deleteDose(doseId) {
+  if (!confirm("Excluir esta dose?")) return;
+  const { error } = await sb.from("pastillero_schedules")
+    .delete()
+    .eq("id", doseId);
+  if (error) {
+    console.error("Error borrar:", error);
+    return showToast("Erro ao excluir: " + error.message, "error");
+  }
+  showToast("Dose excluída ✅", "success");
+  await loadDoses();
+}
+
+// ============================================================
+// EDITAR AUDITOR
+// ============================================================
+function showEditAuditor() {
+  const modal = document.getElementById("modal-edit-auditor");
+  document.getElementById("edit-auditor-name").value = currentProfile.auditor_name || "";
+  document.getElementById("edit-auditor-phone").value = currentProfile.auditor_phone || "";
+  document.getElementById("edit-auditor2-name").value = currentProfile.auditor2_name || "";
+  document.getElementById("edit-auditor2-phone").value = currentProfile.auditor2_phone || "";
+  modal.style.display = "flex";
+}
+function closeEditAuditor() {
+  document.getElementById("modal-edit-auditor").style.display = "none";
+}
+async function saveAuditor() {
+  const name = document.getElementById("edit-auditor-name").value.trim();
+  const phone = document.getElementById("edit-auditor-phone").value.trim();
+  const name2 = document.getElementById("edit-auditor2-name").value.trim();
+  const phone2 = document.getElementById("edit-auditor2-phone").value.trim();
+  if (!name || !phone) return showToast("O responsável principal é obrigatório", "error");
+
+  const { error } = await sb.from("pastillero_users").update({
+    auditor_name: name,
+    auditor_phone: phone,
+    auditor2_name: name2 || null,
+    auditor2_phone: phone2 || null,
+  }).eq("id", currentUser.id);
+
+  if (error) return showToast("Erro ao salvar", "error");
+  currentProfile.auditor_name = name;
+  currentProfile.auditor_phone = phone;
+  currentProfile.auditor2_name = name2;
+  currentProfile.auditor2_phone = phone2;
+  renderAppHeader();
+  closeEditAuditor();
+  showToast("Responsável atualizado ✅", "success");
+}
+
+// ============================================================
+// EMERGÊNCIA — 2 SEGUNDOS DE HOLD
+// ============================================================
+let emergencyHoldTimer = null;
+let emergencyAnimFrame = null;
+
+function startEmergency(e) {
+  e.preventDefault();
+  emergencyStart = Date.now();
+  const btn = document.getElementById("emergency-btn");
+  const bar = document.getElementById("em-progress-bar");
+  btn.classList.add("holding");
+
+  function animate() {
+    const elapsed = Date.now() - emergencyStart;
+    const pct = Math.min((elapsed / EMERGENCY_HOLD_MS) * 100, 100);
+    bar.style.width = pct + "%";
+    if (elapsed < EMERGENCY_HOLD_MS) {
+      emergencyAnimFrame = requestAnimationFrame(animate);
+    } else {
+      fireEmergency();
+    }
+  }
+  emergencyAnimFrame = requestAnimationFrame(animate);
+}
+
+function cancelEmergency() {
+  if (emergencyAnimFrame) cancelAnimationFrame(emergencyAnimFrame);
+  emergencyStart = null;
+  const btn = document.getElementById("emergency-btn");
+  const bar = document.getElementById("em-progress-bar");
+  btn.classList.remove("holding");
+  bar.style.width = "0%";
+}
+
+async function fireEmergency() {
+  cancelEmergency();
+  showToast("🚨 Enviando emergência...", "");
+
+  try {
+    const res = await fetch(EDGE_FUNCTION_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_ANON_KEY}` },
+      body: JSON.stringify({ action: "emergency", userId: currentUser.id }),
+    });
+
+    if (res.ok) {
+      const quien = currentProfile.auditor2_name
+        ? `${currentProfile.auditor_name} y ${currentProfile.auditor2_name}`
+        : currentProfile.auditor_name;
+      showToast(`🚨 Emergencia enviada a ${quien}`, "error");
+    } else {
+      showToast("🚨 Emergência registrada (WhatsApp em breve)", "warning");
+    }
+  } catch (e) {
+    showToast("🚨 Emergência registrada", "warning");
+  }
+  // Guardar emergencia en logs
+  await sb.from("pastillero_logs").insert({
+    user_id: currentUser.id,
+    action: "emergency",
+    timestamp: new Date().toISOString(),
+    success: true,
+  });
+}
+
+// ============================================================
+// AVISO SONORO 10 MINUTOS ANTES
+// ============================================================
+function speakReminder(doseName) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const msg = new SpeechSynthesisUtterance();
+  msg.text = "Atenção. Em dez minutos você precisa tomar " + doseName + ". O comprimido.";
+  msg.lang = "pt-BR";
+  msg.rate = 0.85;
+  msg.pitch = 1.1;
+  msg.volume = 1;
+  window.speechSynthesis.speak(msg);
+}
+
+function scheduleVoiceAlert(dose, doseTime) {
+  const now = new Date();
+  const alertAt = new Date(doseTime.getTime() - 10 * 60 * 1000); // 10 min antes
+  const msUntilAlert = alertAt - now;
+
+  if (msUntilAlert > 0 && msUntilAlert < 24 * 60 * 60 * 1000) {
+    setTimeout(() => {
+      speakReminder(dose.dose_name);
+      showToast("🔔 Em 10 min: " + dose.dose_name, "warning");
+    }, msUntilAlert);
+  }
+}
+
+// ============================================================
+// NOTAS
+// ============================================================
+async function loadNotes() {
+  const { data } = await sb.from("pastillero_users")
+    .select("notes")
+    .eq("id", currentUser.id)
+    .single();
+  if (data && data.notes) {
+    const el = document.getElementById("notes-text");
+    if (el) el.value = data.notes;
+  }
+}
+
+let notesTimer = null;
+function saveNotes() {
+  clearTimeout(notesTimer);
+  notesTimer = setTimeout(async () => {
+    const text = document.getElementById("notes-text").value;
+    await sb.from("pastillero_users")
+      .update({ notes: text })
+      .eq("id", currentUser.id);
+  }, 1000);
+}
+
+async function clearNotes() {
+  if (!confirm("Apagar todas as notas?")) return;
+  document.getElementById("notes-text").value = "";
+  await sb.from("pastillero_users")
+    .update({ notes: "" })
+    .eq("id", currentUser.id);
+  showToast("Notas apagadas", "success");
+}
+
+// ============================================================
+// HISTORIAL DE TOMAS
+// ============================================================
+async function loadHistory() {
+  const container = document.getElementById("history-list");
+  if (!container) return;
+
+  const { data: logs, error } = await sb
+    .from("pastillero_logs")
+    .select("*")
+    .eq("user_id", currentUser.id)
+    .eq("action", "dose_taken")
+    .order("timestamp", { ascending: false })
+    .limit(30);
+
+  if (error || !logs || logs.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--gris)">Nenhuma dose registrada ainda.</div>';
+    return;
+  }
+
+  // Obtener nombres de dosis
+  const { data: schedules } = await sb
+    .from("pastillero_schedules")
+    .select("id, dose_name")
+    .eq("user_id", currentUser.id);
+
+  const scheduleMap = {};
+  (schedules || []).forEach(s => scheduleMap[s.id] = s.dose_name);
+
+  // Agrupar por día
+  const byDay = {};
+  logs.forEach(log => {
+    const fecha = new Date(log.timestamp);
+    const dia = fecha.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" });
+    const hora = fecha.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+    if (!byDay[dia]) byDay[dia] = [];
+    byDay[dia].push({ hora, dose_name: scheduleMap[log.schedule_id] || "Medicación", notify: log.notify_sent });
+  });
+
+  let html = "";
+  for (const [dia, tomas] of Object.entries(byDay)) {
+    html += `<div style="font-weight:700;font-size:0.8rem;color:var(--verde-dark);margin:0.75rem 0 0.4rem;text-transform:capitalize">${dia}</div>`;
+    tomas.forEach(t => {
+      const aviso = t.notify ? "📲" : "🔕";
+      html += `<div style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--borde);font-size:0.85rem">
+        <span>✅ ${t.dose_name}</span>
+        <span style="color:var(--texto-suave)">${aviso} ${t.hora}</span>
+      </div>`;
+    });
+  }
+
+  container.innerHTML = html;
+}
+
+// ============================================================
+// PAYWALL
+// ============================================================
+function showPaywall() {
+  document.getElementById("paywall").classList.remove("hidden");
+}
+
+async function verificarPago() {
+  showToast("Verificando pagamento com Roberto...", "");
+  // Envía WhatsApp a Roberto para verificación manual
+  // Por ahora muestra instrucciones
+  alert(`Para ativar sua conta:\n\nEnvie uma mensagem para Roberto com seu e-mail: ${currentUser?.email}\n\nRoberto ativará sua assinatura manualmente.`);
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, type = "") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show " + type;
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => t.classList.remove("show"), 3000);
+}
+</script>
+</body>
+</html>
