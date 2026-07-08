@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pastileiro Digital — Tranquilidade em um toque</title>
+<meta name="description" content="O app ultra-simples para confirmar a medicação e avisar automaticamente um familiar. Um botão. Um WhatsApp. Paz mental.">
+<style>
+  :root {
+    --verde: #1D9E75;
+    --verde-dark: #085041;
+    --verde-light: #E1F5EE;
+    --verde-mid: #0F6E56;
+    --gris: #F1EFE8;
+    --texto: #2C2C2A;
+    --texto-suave: #5F5E5A;
+    --blanco: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--texto);
+    background: var(--blanco);
+    line-height: 1.6;
+  }
+
+  /* NAV */
+  nav {
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    position: sticky; top: 0;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+  }
+  .nav-logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 1.1rem; color: var(--verde-dark); }
+  .nav-logo span { font-size: 1.4rem; }
+  .nav-cta {
+    background: var(--verde);
+    color: white;
+    text-decoration: none;
+    padding: 0.6rem 1.25rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(180deg, var(--verde-light) 0%, var(--blanco) 100%);
+    padding: 4rem 1.5rem 3rem;
+    text-align: center;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: var(--verde-mid);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.35rem 1rem;
+    border-radius: 50px;
+    margin-bottom: 1.25rem;
+  }
+  .hero h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--verde-dark);
+    margin-bottom: 1rem;
+  }
+  .hero h1 em { font-style: normal; color: var(--verde); }
+  .hero p {
+    font-size: 1.1rem;
+    color: var(--texto-suave);
+    max-width: 500px;
+    margin: 0 auto 2rem;
+    line-height: 1.7;
+  }
+  .hero-btns { display: flex; flex-direction: column; gap: 0.75rem; align-items: center; }
+  .btn-hero-mp {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: #009EE3;
+    color: white;
+    text-decoration: none;
+    padding: 1rem 2rem;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    width: 100%;
+    max-width: 360px;
+    justify-content: center;
+  }
+  .btn-hero-int {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--verde);
+    color: white;
+    text-decoration: none;
+    padding: 0.9rem 2rem;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    width: 100%;
+    max-width: 360px;
+    justify-content: center;
+  }
+  .price-note {
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+    margin-top: 0.5rem;
+  }
+
+  /* MOCKUP */
+  .mockup-section {
+    padding: 3rem 1.5rem;
+    display: flex;
+    justify-content: center;
+  }
+  .phone-frame {
+    width: 280px;
+    background: #111;
+    border-radius: 40px;
+    padding: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  .phone-screen {
+    background: #F1EFE8;
+    border-radius: 30px;
+    overflow: hidden;
+    min-height: 520px;
+  }
+  .phone-header {
+    background: var(--verde);
+    color: white;
+    padding: 0.8rem 1rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .phone-body { padding: 0.75rem; }
+  .phone-summary {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+  }
+  .p-chip {
+    flex: 1;
+    background: white;
+    border-radius: 10px;
+    padding: 0.5rem;
+    text-align: center;
+  }
+  .p-chip .num { font-size: 1.2rem; font-weight: 700; }
+  .p-chip .lbl { font-size: 0.6rem; color: #888; }
+  .p-chip.g .num { color: var(--verde); }
+  .p-chip.r .num { color: #D85A30; }
+  .p-chip.gr .num { color: #888; }
+  .phone-card { background: white; border-radius: 12px; padding: 0.75rem; margin-bottom: 0.5rem; }
+  .phone-card-title { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #888; margin-bottom: 0.5rem; }
+  .phone-dose {
+    background: var(--verde);
+    color: white;
+    border-radius: 10px;
+    padding: 0.7rem 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .phone-dose.done { background: #F1EFE8; color: #888; }
+  .phone-dose .dose-chip {
+    margin-left: auto;
+    font-size: 0.55rem;
+    background: rgba(255,255,255,0.2);
+    padding: 2px 6px;
+    border-radius: 10px;
+  }
+  .phone-dose.done .dose-chip { background: rgba(29,158,117,0.15); color: var(--verde); }
+  .phone-em {
+    background: #D85A30;
+    color: white;
+    border-radius: 10px;
+    padding: 0.65rem;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-top: 0.75rem;
+  }
+
+  /* CÓMO FUNCIONA */
+  .section { padding: 3rem 1.5rem; max-width: 680px; margin: 0 auto; }
+  .section-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    color: var(--verde-dark);
+  }
+  .section-sub { color: var(--texto-suave); margin-bottom: 2rem; font-size: 0.95rem; }
+  .steps { display: flex; flex-direction: column; gap: 1.25rem; }
+  .step {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  .step-num {
+    width: 2.5rem;
+    height: 2.5rem;
+    background: var(--verde);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .step-text h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.2rem; }
+  .step-text p { font-size: 0.9rem; color: var(--texto-suave); }
+
+  /* PARA QUIÉN */
+  .for-section {
+    background: var(--gris);
+    padding: 3rem 1.5rem;
+  }
+  .for-grid {
+    max-width: 680px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  .for-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+  .for-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+  .for-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+  .for-card p { font-size: 0.85rem; color: var(--texto-suave); line-height: 1.5; }
+
+  /* PRECIOS */
+  .pricing { padding: 3rem 1.5rem; max-width: 680px; margin: 0 auto; }
+  .price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+  .price-card {
+    border: 1.5px solid rgba(0,0,0,0.1);
+    border-radius: 20px;
+    padding: 1.5rem;
+    text-align: center;
+  }
+  .price-card.featured { border-color: var(--verde); border-width: 2px; }
+  .price-flag { font-size: 1.5rem; margin-bottom: 0.5rem; }
+  .price-amount { font-size: 2rem; font-weight: 800; color: var(--verde-dark); }
+  .price-period { font-size: 0.8rem; color: var(--texto-suave); margin-bottom: 1rem; }
+  .price-desc { font-size: 0.85rem; color: var(--texto-suave); margin-bottom: 1.25rem; line-height: 1.5; }
+  .btn-price-mp {
+    display: block;
+    background: #009EE3;
+    color: white;
+    text-decoration: none;
+    border-radius: 12px;
+    padding: 0.75rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+  .btn-price-int {
+    display: block;
+    background: var(--verde);
+    color: white;
+    text-decoration: none;
+    border-radius: 12px;
+    padding: 0.75rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  /* TESTIMONIOS */
+  .testimonios { background: var(--gris); padding: 3rem 1.5rem; }
+  .test-grid { max-width: 680px; margin: 1.5rem auto 0; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .test-card { background: white; border-radius: 16px; padding: 1.25rem; }
+  .test-stars { color: var(--verde); font-size: 0.9rem; margin-bottom: 0.5rem; }
+  .test-text { font-size: 0.9rem; line-height: 1.5; color: var(--texto-suave); margin-bottom: 0.75rem; }
+  .test-name { font-size: 0.8rem; font-weight: 700; color: var(--texto); }
+
+  /* CTA FINAL */
+  .cta-final {
+    background: var(--verde-dark);
+    color: white;
+    padding: 4rem 1.5rem;
+    text-align: center;
+  }
+  .cta-final h2 { font-size: 1.75rem; font-weight: 800; margin-bottom: 0.75rem; }
+  .cta-final p { opacity: 0.85; margin-bottom: 2rem; max-width: 400px; margin-left: auto; margin-right: auto; margin-bottom: 2rem; }
+  .cta-btns { display: flex; flex-direction: column; gap: 0.75rem; align-items: center; }
+  .btn-cta-mp {
+    background: #009EE3;
+    color: white;
+    text-decoration: none;
+    padding: 1rem 2.5rem;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 1rem;
+    width: 100%; max-width: 320px;
+    text-align: center;
+  }
+  .btn-cta-int {
+    background: rgba(255,255,255,0.15);
+    color: white;
+    text-decoration: none;
+    padding: 0.9rem 2.5rem;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 1px solid rgba(255,255,255,0.3);
+    width: 100%; max-width: 320px;
+    text-align: center;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 1.5rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+    border-top: 1px solid rgba(0,0,0,0.08);
+  }
+  footer a { color: var(--verde); text-decoration: none; }
+
+  @media (max-width: 480px) {
+    .hero { padding: 3rem 1rem 2rem; }
+    .hero h1 { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><span>💊</span> Pastileiro Digital</div>
+  <a href="app_brasil.html" class="nav-cta">Começar grátis →</a>
+</nav>
+
+<!-- HERO -->
+<section>
+  <div class="hero">
+    <div class="hero-badge">✨ Sem prontuário. Sem complicações.</div>
+    <h1>Um toque. Um WhatsApp.<br><em>Tranquilidade total.</em></h1>
+    <p>O app mais simples para confirmar a medicação e avisar automaticamente o familiar. Ideal para adolescentes com condições crônicas, idosos, e quem toma vários comprimidos diariamente.</p>
+    <div class="hero-btns">
+      <a href="https://mpago.la/1AzDRkM" class="btn-hero-mp">
+        🇧🇷 Assinar com Mercado Pago
+      </a>
+      <a href="app_brasil.html" class="btn-hero-int">
+        🌍 Assinar com Stripe / PayPal (USD)
+      </a>
+      <div class="price-note">7 dias grátis · Cancele quando quiser · Sem cartão no início</div>
+    </div>
+  </div>
+
+  <!-- MOCKUP DEL TELÉFONO -->
+  <div class="mockup-section">
+    <div class="phone-frame">
+      <div class="phone-screen">
+        <div class="phone-header">💊 Pastileiro Digital</div>
+        <div class="phone-body">
+          <div class="phone-summary">
+            <div class="p-chip g"><div class="num">1</div><div class="lbl">Tomados</div></div>
+            <div class="p-chip r"><div class="num">0</div><div class="lbl">Omitidos</div></div>
+            <div class="p-chip gr"><div class="num">2</div><div class="lbl">Pendentes</div></div>
+          </div>
+          <div class="phone-card">
+            <div class="phone-card-title">Doses de hoje</div>
+            <div class="phone-dose done">✅ <span>Mañana · 08:00</span><span class="dose-chip">✅ Tomado</span></div>
+            <div class="phone-dose">💊 <span>Mediodía · 13:00</span><span class="dose-chip">⏳ Pendente</span></div>
+            <div class="phone-dose">💊 <span>Noche · 21:00</span><span class="dose-chip">⏳ Pendente</span></div>
+          </div>
+          <div class="phone-em">🚨 EMERGENCIA<br><span style="font-size:0.55rem;opacity:0.85">Manter 2 segundos</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CÓMO FUNCIONA -->
+<section class="section">
+  <div class="section-title">Simples assim</div>
+  <div class="section-sub">Sem curva de aprendizado. Sem manuais. Em 3 minutos já está funcionando.</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        <h3>Crie sua conta em 2 minutos</h3>
+        <p>Informe seu nome, o nome do familiar que receberá os avisos, e o número de WhatsApp. Pronto.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        <h3>Configure os horários da sua medicação</h3>
+        <p>Informe cada comprimido com seu horário. Escolha também quantos minutos de tolerância antes do aviso de dose não tomada.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        <h3>Toque o botão quando tomar</h3>
+        <p>Um botão gigante para cada dose. Ao tocá-lo, chega um WhatsApp automático ao responsável: "João tomou sua medicação da manhã."</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text">
+        <h3>Se não confirmar, chega o aviso de alerta</h3>
+        <p>Se passar o tempo de tolerância sem confirmação, o responsável recebe automaticamente um aviso para tomar as medidas necessárias.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-text">
+        <h3>Botão de emergência com dupla proteção</h3>
+        <p>Um botão vermelho que só ativa se mantido pressionado por 2 segundos. Evita acionamentos acidentais no bolso. Uma mensagem urgente chega ao responsável na hora.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PARA QUIÉN -->
+<section class="for-section">
+  <div style="max-width:680px;margin:0 auto">
+    <div class="section-title">Para quem é?</div>
+    <div class="section-sub">Três situações diferentes. Uma única solução.</div>
+  </div>
+  <div class="for-grid">
+    <div class="for-card">
+      <div class="for-icon">👦</div>
+      <h3>Adolescentes com condições crônicas</h3>
+      <p>Dê independência ao seu filho. Saiba que tomou a dose sem precisar ligar. Sem sufocar sua autonomia.</p>
+    </div>
+    <div class="for-card">
+      <div class="for-icon">💊</div>
+      <h3>Adultos com vários comprimidos</h3>
+      <p>¿Tomaste la de la mañana? ¿La del mediodía? Con 3 o más pastillas los olvidos son inevitables. Pastileiro Digital te da orden y certeza.</p>
+    </div>
+    <div class="for-card">
+      <div class="for-icon">🏠</div>
+      <h3>Idosos sozinhos em casa</h3>
+      <p>Mora sozinho mas com um familiar por perto. O botão de emergência avisa em segundos se algo não estiver bem.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRECIOS -->
+<section class="pricing">
+  <div class="section-title">Um preço acessível. Tranquilidade sem limite.</div>
+  <div class="section-sub">Menos do que um café por semana.</div>
+  <div class="price-grid">
+    <div class="price-card featured">
+      <div class="price-flag">🇦🇷</div>
+      <div class="price-amount">R$ 49,90</div>
+      <div class="price-period">reais por mês · Mercado Pago</div>
+      <div class="price-desc">Para usuários no Brasil. Pagamento local, fácil, sem burocracia.</div>
+      <a href="https://mpago.la/1AzDRkM" class="btn-price-mp">Assinar com Mercado Pago</a>
+    </div>
+    <div class="price-card">
+      <div class="price-flag">🌍</div>
+      <div class="price-amount">USD 9,99</div>
+      <div class="price-period">por mês · Stripe ou PayPal</div>
+      <div class="price-desc">Para usuários nos EUA, Europa, México, Argentina e mais.</div>
+      <a href="#stripe" class="btn-price-int">Subscribe — USD 9.99/mês</a>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIOS -->
+<section class="testimonios">
+  <div style="max-width:680px;margin:0 auto">
+    <div class="section-title">O que dizem as famílias</div>
+    <div class="section-sub">Histórias reais de pessoas que recuperaram a tranquilidade.</div>
+  </div>
+  <div class="test-grid">
+    <div class="test-card">
+      <div class="test-stars">★★★★★</div>
+      <div class="test-text">"Meu filho tem diabetes e odiava quando eu ligava para saber se tomou a insulina. Agora o WhatsApp chega sozinho. Ele sente que o respeito e eu fico tranquila."</div>
+      <div class="test-name">— Claudia M., São Paulo</div>
+    </div>
+    <div class="test-card">
+      <div class="test-stars">★★★★★</div>
+      <div class="test-text">"Tomo 7 comprimidos por dia. Sempre me confundia se tinha tomado o do almoço. Agora vejo o botão verde e sei que já tomei."</div>
+      <div class="test-name">— Roberto W., 79 anos</div>
+    </div>
+    <div class="test-card">
+      <div class="test-stars">★★★★★</div>
+      <div class="test-text">"Meu pai mora sozinho. O botão de emergência me dá uma tranquilidade enorme. Sei que se algo acontecer, ele mesmo me avisa."</div>
+      <div class="test-name">— Lucía T., Curitiba</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-final">
+  <h2>Comece hoje.<br>Sem riscos.</h2>
+  <p style="opacity:0.85;margin-bottom:2rem;max-width:400px;margin-left:auto;margin-right:auto">7 dias grátis. Sem cartão no início. Cancele quando quiser. A tranquilidade de saber que tomou a medicação não tem preço.</p>
+  <div class="cta-btns">
+    <a href="https://mpago.la/1AzDRkM" class="btn-cta-mp">🇧🇷 Começar com Mercado Pago</a>
+    <a href="#stripe" class="btn-cta-int">🌍 Começar com Stripe / PayPal (USD)</a>
+  </div>
+</section>
+
+<footer>
+  <p>© 2025 Pastileiro Digital · <a href="#">Termos</a> · <a href="#">Privacidade</a> · <a href="mailto:arqwallner@gmail.com">Contato</a></p>
+</footer>
+
+</body>
+</html>
