@@ -1,0 +1,34 @@
+{
+  "name": "cronos-salud-pastillero",
+  "version": "4.0.0",
+  "description": "Pastillero Digital - Cronos Salud: Asistente inteligente de medicación y botón de emergencia para adultos mayores",
+  "private": true,
+  "scripts": {
+    "prepare-www": "node prepare-www.js",
+    "cap:sync": "npm run prepare-www && cap sync android",
+    "cap:open": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.0",
+    "@capacitor/app": "^6.0.0",
+    "@capacitor/cli": "^6.1.0",
+    "@capacitor/core": "^6.1.0",
+    "@capacitor/dialog": "^6.0.0",
+    "@capacitor/haptics": "^6.0.0",
+    "@capacitor/local-notifications": "^6.0.0",
+    "@capacitor/push-notifications": "^6.0.0",
+    "@capacitor/text-to-speech": "^6.0.0"
+  },
+  "keywords": [
+    "salud",
+    "pastillero",
+    "adultos-mayores",
+    "recordatorio-medicacion",
+    "emergencia",
+    "pwa",
+    "capacitor",
+    "android"
+  ],
+  "author": "Cronos Salud",
+  "license": "UNLICENSED"
+}
